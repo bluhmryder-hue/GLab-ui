@@ -196,7 +196,11 @@ function BlockViewerToolbar({ styleName }: { styleName: Style["name"] }) {
               asChild
               title="Open in New Tab"
             >
-              <Link href={`/view/${styleName}/${item.name}`} target="_blank">
+              <Link
+                href={`/view/${styleName}/${item.name}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <span className="sr-only">Open in New Tab</span>
                 <Fullscreen />
               </Link>

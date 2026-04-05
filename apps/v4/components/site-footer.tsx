@@ -10,7 +10,7 @@ export function SiteFooter() {
             <a
               href={siteConfig.links.twitter}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="font-medium underline underline-offset-4"
             >
               shadcn
@@ -19,7 +19,7 @@ export function SiteFooter() {
             <a
               href="https://vercel.com/new?utm_source=shadcn_site&utm_medium=web&utm_campaign=docs_cta_deploy_now_callout"
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="font-medium underline underline-offset-4"
             >
               Vercel
@@ -28,7 +28,7 @@ export function SiteFooter() {
             <a
               href={siteConfig.links.github}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="font-medium underline underline-offset-4"
             >
               GitHub

@@ -91,6 +91,7 @@ const menuItems = {
     <a
       href={getPromptUrl("https://scira.ai/", url)}
       target="_blank"
+      rel="noopener noreferrer"
       className="m-0 p-0"
     >
       <svg
