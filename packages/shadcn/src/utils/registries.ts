@@ -32,7 +32,7 @@ export async function ensureRegistriesInConfig(
 
   if (missingRegistries.length === 0) {
     return {
-      config,
+      config: filterBuiltinRegistries(config),
       newRegistries: [],
     }
   }
@@ -45,7 +45,7 @@ export async function ensureRegistriesInConfig(
 
   if (!registryIndex) {
     return {
-      config,
+      config: filterBuiltinRegistries(config),
       newRegistries: [],
     }
   }
@@ -59,22 +59,15 @@ export async function ensureRegistriesInConfig(
 
   if (Object.keys(foundRegistries).length === 0) {
     return {
-      config,
+      config: filterBuiltinRegistries(config),
       newRegistries: [],
     }
   }
 
-  // Filter out built-in registries from existing config before merging
-  const existingRegistries = Object.fromEntries(
-    Object.entries(config.registries || {}).filter(
-      ([key]) => !Object.keys(BUILTIN_REGISTRIES).includes(key)
-    )
-  )
-
   const newConfigWithRegistries = {
     ...config,
     registries: {
-      ...existingRegistries,
+      ...filterBuiltinRegistries(config).registries,
       ...foundRegistries,
     },
   }
@@ -97,5 +90,16 @@ export async function ensureRegistriesInConfig(
   return {
     config: newConfigWithRegistries,
     newRegistries: Object.keys(foundRegistries),
+  }
+}
+
+export function filterBuiltinRegistries(config: Config) {
+  return {
+    ...config,
+    registries: Object.fromEntries(
+      Object.entries(config.registries || {}).filter(
+        ([key]) => !Object.keys(BUILTIN_REGISTRIES).includes(key)
+      )
+    ),
   }
 }

@@ -10,7 +10,7 @@ import {
   resolveRegistryBaseConfig,
 } from "@/src/preset/presets"
 import { getRegistryBaseColors, getRegistryStyles } from "@/src/registry/api"
-import { BUILTIN_REGISTRIES, SHADCN_URL } from "@/src/registry/constants"
+import { SHADCN_URL } from "@/src/registry/constants"
 import { clearRegistryContext } from "@/src/registry/context"
 import { registryConfigSchema } from "@/src/registry/schema"
 import { isUrl } from "@/src/registry/utils"
@@ -55,7 +55,10 @@ import {
 import { handleError } from "@/src/utils/handle-error"
 import { highlighter } from "@/src/utils/highlighter"
 import { logger } from "@/src/utils/logger"
-import { ensureRegistriesInConfig } from "@/src/utils/registries"
+import {
+  ensureRegistriesInConfig,
+  filterBuiltinRegistries,
+} from "@/src/utils/registries"
 import { spinner } from "@/src/utils/spinner"
 import { Command } from "commander"
 import deepmerge from "deepmerge"
@@ -711,13 +714,8 @@ export async function runInit(
     config.rtl = options.rtl
   }
 
-  // Make sure to filter out built-in registries.
-  // TODO: fix this in ensureRegistriesInConfig.
-  config.registries = Object.fromEntries(
-    Object.entries(config.registries || {}).filter(
-      ([key]) => !Object.keys(BUILTIN_REGISTRIES).includes(key)
-    )
-  )
+  // Filter out built-in registries.
+  config = filterBuiltinRegistries(config)
 
   // Write components.json.
   await fs.writeFile(targetPath, `${JSON.stringify(config, null, 2)}\n`, "utf8")
