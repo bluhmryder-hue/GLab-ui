@@ -124,19 +124,20 @@ async function buildRegistry(opts: z.infer<typeof buildOptionsSchema>) {
       registryItem["$schema"] =
         "https://ui.shadcn.com/schema/registry-item.json"
 
-      for (const file of registryItem.files) {
-        const absPath = path.resolve(resolvePaths.cwd, file.path)
-        try {
-          const stat = await fs.stat(absPath)
-          if (!stat.isFile()) {
-            continue
+      await Promise.all(
+        registryItem.files.map(async (file) => {
+          const absPath = path.resolve(resolvePaths.cwd, file.path)
+          try {
+            const stat = await fs.stat(absPath)
+            if (!stat.isFile()) {
+              return
+            }
+            file["content"] = await fs.readFile(absPath, "utf-8")
+          } catch (err) {
+            console.error("Error reading file in registry build:", absPath, err)
           }
-          file["content"] = await fs.readFile(absPath, "utf-8")
-        } catch (err) {
-          console.error("Error reading file in registry build:", absPath, err)
-          continue
-        }
-      }
+        })
+      )
 
       const result = registryItemSchema.safeParse(registryItem)
       if (!result.success) {
