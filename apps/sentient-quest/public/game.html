@@ -1,0 +1,593 @@
+<!-- SentientQuest: Animus Engine | Last Modified: 2026-04-26T17:07:24Z
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Animus: School Spirit</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="/game.css">
+</head>
+
+<body>
+<input type="file" id="file-loader" accept=".json" style="display:none" onchange="Persistence.handleFileSelect(this)">
+
+<div id="genesis-modal" class="modal-overlay active" style="background: #000;">
+    <div class="genesis-box">
+        <button class="settings-close-btn" onclick="UI.toggleSettings()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+       <div class="genesis-left">
+            <div class="genesis-header">
+                <div class="gh-title">Manifestation Protocol</div>
+                <div class="gh-sub">Fill <strong>at least one</strong> field to anchor your reality.</div>
+            </div>
+
+            <div class="input-group">
+                <label>School Name</label>
+                <input type="text" id="gen-school" placeholder="e.g. Blackwood High" class="gen-input">
+            </div>
+
+            <div class="input-group">
+                <label>School Nature & Description</label>
+                <textarea id="gen-desc" placeholder="e.g. A hidden sect of karmic assassins..." class="gen-input" style="height: 60px;"></textarea>
+            </div>
+            <div class="input-group">
+                <label>Theme & Genre</label>
+                <input type="text" id="gen-theme" placeholder="e.g. 90s Grunge Horror, Cyberpunk Academy" class="gen-input">
+            </div>
+
+            <div class="input-group">
+                <label>Inciting Event (The Birth)</label>
+                <textarea id="gen-event" placeholder="What emotional surge created you?" class="gen-input"></textarea>
+            </div>
+
+            <div class="genesis-footer">
+                <button class="gen-btn-primary" onclick="GenesisEngine.begin()">
+                    <i class="fa-solid fa-bolt"></i> MANIFEST REALITY
+                </button>
+                <button class="gen-btn-secondary" onclick="Persistence.loadGame()">
+                    <i class="fa-solid fa-upload"></i> Load School
+                </button>
+            </div>
+        </div>
+
+        <div class="genesis-right">
+            <div id="settings-drag-handle" style="display:none; padding:15px; cursor:move; font-family:var(--font-header); font-size:1.1rem; color:var(--theme-accent); border-bottom:1px solid #333; align-items:center; background: rgba(0,0,0,0.5);">
+                <i class="fa-solid fa-gear" style="margin-right: 10px;"></i> Core Settings
+            </div>
+            <div class="gen-tabs">
+                <button class="gen-tab-btn active tab-btn-intro" onclick="UI.switchGenTab('intro', this)">Directives</button>
+                <button class="gen-tab-btn" onclick="UI.switchGenTab('uniforms', this)" style="display:none">Uniforms</button>
+                <button class="gen-tab-btn" onclick="UI.switchGenTab('config', this)">Settings</button>
+                <button class="gen-tab-btn" onclick="UI.switchGenTab('demographics', this); UI.renderDemographics();">Demographics</button>
+            </div>
+
+            <div id="gen-tab-intro" class="gen-tab-content active">
+                <div style="background:rgba(255,255,255,0.03); border:1px solid #444; border-radius:4px; padding:10px; margin-bottom:15px;">
+                    <div style="font-size:0.75rem; color:var(--theme-accent); font-weight:bold; margin-bottom:5px; text-transform:uppercase; letter-spacing:1px;">Scenario Laboratory</div>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="gen-scenario-select" class="gen-input" style="flex:1;" onchange="UI.applyScenario()">
+                            <option value="">-- Load Scenario --</option>
+                        </select>
+                        <button class="icon-btn" onclick="UI.saveScenario()" title="Save Preset" style="border:1px solid #444;">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                        </button>
+                        <button class="icon-btn" onclick="UI.deleteScenario()" title="Delete Preset" style="border:1px solid #444; color:var(--dis-red);">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="help-text">
+                    <p><strong style="color:var(--theme-accent)">You are an Animus.</strong></p>
+                    <p>You enter the world as little more than a knot of emotions and potential. You are a disembodied spirit (an Animus). You have no health, no inventory, and no body. You exist only as a collection of psychological traits (The Psyche Matrix). Explore, inspect, and interact with the world to form bonds and manifest your identity.</p>
+                    <p>You are a spirit born from a surge of intense emotion. To anchor yourself in reality, you must define your origin. The more detail provided, the more focused your initial genesis will become.</p>
+                    <p>Enter the <strong>Name</strong>, <strong>Theme</strong>, <strong>Location</strong>, AND/OR the <strong>Event</strong> of your birth.</p>
+                    <p style="font-size: 0.8rem; color: #888; margin-top: 10px;"><em>While only one of these is required, defining more parameters and providing detailed descriptions results in a more stable and customized initial manifestation.</em></p>
+                </div>
+            </div>
+
+            <div id="gen-tab-uniforms" class="gen-tab-content">
+                <div class="setting-row" style="margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 15px;">
+                    <span class="setting-label" style="display:block; margin-bottom:5px;">School Palette (Pri / Sec / High)</span>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="color" id="col-primary" value="#1a1a2e" style="flex:1; height:30px; border:none;" onchange="UI.updateSchoolConfig()">
+                        <input type="color" id="col-secondary" value="#d4af37" style="flex:1; height:30px; border:none;" onchange="UI.updateSchoolConfig()">
+                        <input type="color" id="col-highlight" value="#ffffff" style="flex:1; height:30px; border:none;" onchange="UI.updateSchoolConfig()">
+                    </div>
+                </div>
+                <div class="setting-row" style="margin-bottom: 15px; display:flex; gap:15px;">
+                    <div style="flex:1;">
+                        <span class="setting-label">Student Policy</span>
+                        <div style="display: flex; gap: 10px; margin-top: 5px;">
+                            <button id="mode-uniform" class="gen-btn-secondary active" style="padding: 5px; flex:1;" onclick="UI.setAttireMode('Uniform')">Uniform</button>
+                            <button id="mode-code" class="gen-btn-secondary" style="padding: 5px; flex:1;" onclick="UI.setAttireMode('DressCode')">Dress Code</button>
+                        </div>
+                    </div>
+                    <div style="flex:1;">
+                        <span class="setting-label">Enforcement</span>
+                        <select id="set-uniform-strictness" class="gen-input" style="margin-top:5px;" onchange="Settings.update('uniformStrictness', this.value)">
+                            <option value="Relaxed">Relaxed (Damage Only)</option>
+                            <option value="Standard">Standard (Hygiene)</option>
+                            <option value="Strict">Strict (Style/Neatness)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Select Role to Edit</span>
+                    <div style="display: flex; gap: 5px;">
+                        <select id="uniform-selector" class="gen-input" onchange="UI.loadUniform(this.value)" style="flex: 1;"></select>
+                        <button class="icon-btn" onclick="UI.regenerateCurrentTemplate()" title="Reset to Template" style="border: 1px solid #444;"><i class="fa-solid fa-rotate-left"></i></button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Attire Description</span>
+
+                    <textarea id="uniform-editor" class="gen-input" style="height:120px; line-height: 1.5; font-family: monospace;" placeholder="Select a role to edit..." oninput="UI.saveUniform()"></textarea>
+                </div>
+            </div>
+
+            <div id="gen-tab-demographics" class="gen-tab-content" style="padding: 20px; overflow-y: auto; max-height: 100%;"></div>
+
+           <div id="gen-tab-config" class="gen-tab-content">
+                <div class="setting-row" style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                    <span class="setting-label" style="color:var(--theme-accent);"><i class="fa-solid fa-layer-group"></i> World Complexity</span>
+                    <button id="btn-tier-toggle" class="gen-btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; width: 100px; font-weight: bold;" onclick="Settings.cycleTier()">Baseline</button>
+                </div>
+                <div class="setting-row" style="margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 8px;">
+                    <span class="setting-label" style="color:var(--theme-accent);">Enable Supernatural (Spirits)</span>
+                    <input type="checkbox" id="set-allow-spirits" onchange="Settings.update('allowSpirits', this.checked)" style="accent-color: var(--theme-accent); width: 16px; height: 16px;">
+                </div>
+                <div class="setting-row" style="display: flex; gap: 10px; margin-bottom: 8px;">
+                    <div style="flex:1;">
+                        <span class="setting-label">Font Family</span>
+                        <select class="gen-input" onchange="Settings.update('fontFamily', this.value)" id="set-font-family" style="width:100%;">
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <span class="setting-label">Font Size: <span id="val-font-size">14px</span></span>
+                        <input type="range" min="12" max="18" value="14" style="width:100%; accent-color:var(--theme-accent); margin-top: 10px;" oninput="Settings.update('fontSize', this.value)">
+                    </div>
+                </div>
+
+                <div class="setting-row" style="display: flex; gap: 10px; margin-top:5px; margin-bottom: 8px;">
+                    <div style="flex:1;">
+                        <span class="setting-label">Text Threads: <span id="val-text-conc">5</span></span>
+                        <input type="range" min="4" max="15" value="5" style="width:100%; accent-color:var(--theme-accent);"
+                            oninput="Settings.update('textConcurrency', this.value); document.getElementById('val-text-conc').innerText=this.value">
+                    </div>
+                    <div style="flex:1;">
+                        <span class="setting-label">Image Threads: <span id="val-img-conc">2</span></span>
+                        <input type="range" min="2" max="8" value="3" style="width:100%; accent-color:var(--theme-accent);"
+                            oninput="Settings.update('imageConcurrency', this.value); document.getElementById('val-img-conc').innerText=this.value">
+                    </div>
+                </div>
+
+                <hr style="border-color:#333; margin: 8px 0;">
+
+                <div class="setting-row" style="margin-bottom: 8px;">
+                    <span class="setting-label">Gender Ratio: <span id="val-gender-ratio">50% Female</span></span>
+                    <input type="range" id="set-gender-ratio" min="0" max="100" step="5" value="50" style="width:100%; accent-color:var(--theme-accent);"
+                        oninput="Settings.update('genderRatio', this.value); document.getElementById('val-gender-ratio').innerText=this.value + '% Female'">
+                    <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:#666; margin-top:-5px;">
+                        <span>Mostly Male</span>
+                        <span>Balanced</span>
+                        <span>Mostly Female</span>
+                    </div>
+                </div>
+
+                <hr style="border-color:#333; margin: 8px 0;">
+
+                <div class="setting-row" style="display: flex; gap: 10px; margin-bottom: 8px;">
+                    <div style="flex:1;">
+                        <span class="setting-label">Content Filter</span>
+                        <select class="gen-input" onchange="Settings.update('contentRating', this.value)" id="set-content-rating">
+                            <option value="Everyone">Everyone (Clean)</option>
+                            <option value="Teen">Teen (PG-13)</option>
+                            <option value="Mature">Mature (17+)</option>
+                            <option value="Adult">Adult (R)</option>
+                            <option value="X">Unrestricted (X)</option>
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <span class="setting-label">Visual Medium</span>
+                        <select class="gen-input" onchange="Settings.setMedium(this.value)" id="set-medium-preset">
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <span class="setting-label">Stylization</span>
+                        <select class="gen-input" onchange="Settings.setStylization(this.value)" id="set-style-preset">
+                        </select>
+                    </div>
+                    <div style="flex: 0 0 100px;">
+                        <span class="setting-label">Idle Time</span>
+                        <div style="display: flex; align-items: center; gap: 5px; margin-top: 2px;">
+                            <input type="number" id="set-idle-mins" class="gen-input" style="padding: 5px;" min="1" max="120"
+                                onchange="Settings.update('idleTimeoutMins', this.value)">
+                            <input type="checkbox" id="set-idle-enabled"
+                                onchange="const v = this.checked ? 20 : 0; Settings.update('idleTimeoutMins', v);">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-row" style="margin-bottom: 8px;">
+                    <span class="setting-label">Style Helper (Prompt)</span>
+                    <textarea class="gen-input" style="height:40px; min-height:40px;" placeholder="Override the visual style..." oninput="Settings.update('styleText', this.value)" id="set-style-text"></textarea>
+                </div>
+                <div class="setting-row" style="margin-bottom: 8px;">
+                    <span class="setting-label">Narrative Flavor</span>
+                    <textarea class="gen-input" style="height:40px; min-height:40px;" oninput="Settings.update('themeIntro', this.value)" id="set-theme-intro"></textarea>
+                </div>
+                <div class="setting-row" style="margin-bottom: 8px;">
+                    <span class="setting-label">Negative Prompt</span>
+                    <textarea class="gen-input" style="height:40px; min-height:40px;" oninput="Settings.update('negativePrompt', this.value)" id="set-negative-prompt">text, watermark, blurry, interface, ugly, deformed</textarea>
+                </div>
+
+                <hr style="border-color:#333; margin: 10px 0;">
+
+                <div class="setting-row">
+                    <span class="setting-label" style="color:var(--dis-red);"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</span>
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <button class="gen-btn-secondary" onclick="Persistence.resetReality('soft')" style="border-color:#aaa; color:#aaa; flex:1; padding: 8px;">
+                            <i class="fa-solid fa-power-off"></i> New Game
+                        </button>
+                        <button class="gen-btn-secondary" onclick="Persistence.resetReality('quick')" style="border-color:#e67e22; color:#e67e22; flex:1; padding: 8px;">
+                            <i class="fa-solid fa-rotate"></i> Reroll
+                        </button>
+                        <button class="gen-btn-secondary" onclick="Persistence.resetReality('factory')" style="border-color:var(--dis-red); color:var(--dis-red); flex:1; padding: 8px;">
+                            <i class="fa-solid fa-bomb"></i> Wipe
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="world-bg"></div>
+
+<header id="main-header">
+    <div style="display: flex; align-items: center;">
+        <img id="header-crest" src="" style="display:none; height: 40px; width: 40px; margin-right: 15px; object-fit: contain; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2));">
+        <div style="display: flex; flex-direction: column; justify-content: center; line-height: 1.1;">
+            <span class="header-title" id="school-name">Animus</span>
+            <span class="header-sub" id="locus-name">Void</span>
+        </div>
+    </div>
+
+    <div id="chronos-wrapper">
+        <div id="chronos-label">--:--</div>
+        <div id="chronos-bar"></div>
+    </div>
+    <div class="header-controls">
+        <button class="icon-btn" onclick="UI.toggleGrimoire()" title="Grimoire (Known Entities)"><i class="fa-solid fa-book-journal-whills"></i></button>
+        <button class="icon-btn" id="btn-gallery" onclick="UI.toggleGallery()" title="Visual Archives"><i class="fa-solid fa-images"></i></button>
+        <button class="icon-btn" onclick="UI.toggleSettings()" title="Settings"><i class="fa-solid fa-gear"></i></button>
+        <button class="icon-btn" onclick="Persistence.saveGame()" title="Save Reality"><i class="fa-solid fa-floppy-disk"></i></button>
+        <button class="icon-btn" onclick="UI.toggleChat()" title="Commune (Global Chat)"><i class="fa-solid fa-comments"></i></button>
+        <button class="icon-btn" onclick="UI.toggleTelemetry()" title="AI Job Monitor"><i class="fa-solid fa-tower-observation"></i></button>
+        <button class="icon-btn" onclick="UI.toggleHelp()" title="Help"><i class="fa-solid fa-circle-question"></i></button>
+    </div>
+</header>
+
+<div id="app-container">
+    <div id="stage-panel">
+        <div id="narrative-log">
+            <div class="log-entry" style="color: var(--text-dim); font-style: italic;">
+                System Initialized. Awaiting manifestation...
+            </div>
+        </div>
+        <div id="peripheral-feed"></div>
+
+        <div id="player-inventory" style="display:none;">
+            <span style="color:var(--theme-accent); font-weight:bold; font-size:0.75rem; text-transform:uppercase; letter-spacing:1px;"><i class="fa-solid fa-briefcase"></i> Items</span>
+            <div id="inv-slots" style="display:flex; gap:8px; flex:1;"></div>
+        </div>
+
+        <div id="command-deck">
+            <select id="target-selector" onchange="Manager.setTargetFromDropdown()">
+                <option value="">-- No Target --</option>
+            </select>
+
+            <select id="action-mode" onchange="UI.updateCommandDeck()">
+            </select>
+
+            <input type="text" id="player-input" placeholder="Interact with the world..." autocomplete="off">
+
+            <button id="btn-act" onclick="Manager.submit()">ACT</button>
+
+            <div class="deck-divider"></div>
+
+            <select id="travel-dest" onchange="Navigation.attemptTravel()">
+                <option value="">-- Stay Here --</option>
+            </select>
+            <button id="btn-travel" onclick="Navigation.attemptTravel()" style="display:none">GO</button>
+
+            <div id="input-tooltip" class="deck-tooltip">Physically interact with the world (Manifestation).</div>
+        </div>
+    </div>
+
+    <div id="system-panel">
+        <div id="sys-vitals">
+            <div class="vit-section">
+                <span class="vit-label"> Reality</span>
+                <div class="vit-data">
+                    <span id="vit-tier-label" style="color: var(--theme-accent); font-weight: bold;">Baseline</span>
+                    <span id="vit-tier-status" style="color: #aaa; font-style: italic; margin-left: 4px;">(Stable)</span>
+                </div>
+            </div>
+
+            <div class="vit-section">
+                <span class="vit-label">System</span>
+                <div class="vit-data">
+                    <span title="Network Ping"><i class="fa-solid fa-wifi"></i> <span id="vit-ping">--</span>ms</span>
+                    <span title="Memory Usage"><i class="fa-solid fa-microchip"></i> <span id="vit-mem">--</span>MB</span>
+                </div>
+            </div>
+
+            <div class="vit-section">
+                <span class="vit-label"> Queue</span>
+                <div class="vit-data">
+                    <span title="Text Gen"><i class="fa-solid fa-align-left"></i> <span id="vit-txt-q">0</span></span>
+                    <span title="Image Gen"><i class="fa-solid fa-image"></i> <span id="vit-img-q">0</span></span>
+                </div>
+            </div>
+
+            <div style="padding: 5px;">
+                <div class="bar-container" title="Corporeality: How real are you? (-1.0 to 1.0)">
+                    <span class="bar-label lbl-corp">Corp: </span>
+                    <div class="bar-track track-corp">
+                        <div id="bar-corp" class="bar-fill corp"></div>
+                    </div>
+                </div>
+                <div class="bar-container" title="Stamina: Energy to manifest">
+                    <span class="bar-label lbl-stam">Stam: </span>
+                    <div class="bar-track track-stam">
+                        <div id="bar-stam" class="bar-fill stam"></div>
+                    </div>
+                </div>
+                <div class="bar-container" title="Haunt Level: Suspicion & Paranormal Activity">
+                    <span class="bar-label lbl-haunt">Heat: </span>
+                    <div class="bar-track track-haunt">
+                        <div id="bar-haunt" class="bar-fill haunt"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       <div class="chart-container">
+            <div style="position: relative; height: 220px; width: 100%; flex-shrink: 0;">
+                <canvas id="psycheChart"></canvas>
+            </div>
+
+            <div id="subsume-controls">
+                <button id="btn-subsume" onclick="Metaphysics.toggleSubsumption()">
+                    <i class="fa-solid fa-ghost"></i> Subsume Spirit
+                </button>
+            </div>
+        </div>
+
+        <div id="census-controls" style="flex: 0 0 auto; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+            <div class="gen-tabs" style="border-bottom: 1px solid #333;">
+               <button id="tab-cen-entities" class="gen-tab-btn active" onclick="UI.switchCensus('entities')">Entities</button>
+               <button id="tab-cen-locus" class="gen-tab-btn" onclick="UI.switchCensus('locus')">Locus</button>
+            </div>
+
+            <div id="census-locus-subs" style="display:none; padding: 5px; gap: 5px; background: rgba(0,0,0,0.3);">
+               <button id="sub-cen-items" class="gen-btn-secondary active" style="padding: 4px 8px; font-size: 0.75rem; flex:1;" onclick="UI.switchLocusSub('items')">Debris</button>
+               <button id="sub-cen-features" class="gen-btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; flex:1;" onclick="UI.switchLocusSub('features')">Features</button>
+               <button id="sub-cen-exits" class="gen-btn-secondary" style="padding: 4px 8px; font-size: 0.75rem; flex:1;" onclick="UI.switchLocusSub('exits')">Exits</button>
+            </div>
+        </div>
+
+        <div id="npc-grid"></div>
+    </div>
+</div>
+
+<div id="help-modal" class="modal-overlay" onclick="if(event.target===this) UI.toggleHelp()">
+    <div class="modal-box">
+        <div class="modal-header">
+            <span>The Animus Protocol</span>
+            <button class="icon-btn" onclick="UI.toggleHelp()">&times;</button>
+        </div>
+        <div class="modal-content">
+            <div class="help-section">
+                <div class="help-title"><i class="fa-solid fa-dna"></i> The Animus Protocol</div>
+                <div class="help-text">
+                    <p>You are a spirit manifesting in a physical reality. Your power is derived from your <strong>Psyche Matrix</strong> (16PF).</p>
+                    <p>Every action (Touch, Talk, Command) is filtered through your personality. Actions aligned with your nature are effortless. Actions against it cause <strong>Resistance</strong>.</p>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-title"><i class="fa-solid fa-chart-line"></i> Flux & Growth</div>
+                <div class="help-text">
+                    <p><strong>Flux:</strong> You are not static. If you force yourself to perform an action against your nature (e.g., a shy spirit commanding a crowd), and you succeed, your personality will <strong>drift</strong> toward that new trait.</p>
+                    <p><strong>Growth:</strong> To manifest permanently, you must stabilize your presence by anchoring yourself to Loci (Rooms) and Entities (NPCs) via Observation and Interaction.</p>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-title"><i class="fa-solid fa-gamepad"></i> Manifestation Guide</div>
+                <div class="help-text">
+                    <p>To become real, you must gather <strong>Corporeality</strong>. You can do this in two ways:</p>
+                    <ul>
+                        <li><strong>Strain:</strong> Attempt actions slightly above your current level (e.g., trying to Touch when you are a ghost). Success builds muscle.</li>
+                        <li><strong>Feed:</strong> Perform actions that perfectly align with your nature (High Resonance). If you <strong>Incite</strong>, <strong>Influence</strong>, or <strong>Disrupt</strong> a target while in a flow state, you will consume the emotional energy.</li>
+                    </ul>
+                    <hr style="border-color:rgba(255,255,255,0.1); margin:10px 0;">
+                    <p><strong>Action Tiers (By Cost):</strong></p>
+                    <ul>
+                         <li><span style="color:#a29bfe">Mental / Incite / Influence</span> (Low Cost): Whispers, emotion, suggestions.</li>
+                         <li><span style="color:#f1c40f">Disrupt / Poltergeist</span> (Med Cost): Flickering lights, confusion, moving dust.</li>
+                         <li><span style="color:#e74c3c">Command / Physical</span> (High Cost): Domination, moving objects.</li>
+                         <li><span style="color:#ff5555">Violent</span> (Extreme Cost): Harm and destruction.</li>
+                    </ul>
+                </div>
+            </div>
+
+          <div class="help-section">
+                <div class="help-title"><i class="fa-solid fa-skull"></i> Conflict & Subsumption</div>
+                <div class="help-text">
+                    <p><strong>Siege:</strong> Hostile Spirits may attempt to <strong>Subsume</strong> you. This forces a rapid synchronization of Psyches. If your Spirit Integrity hits 0%, your personality will be forcibly overwritten by theirs.</p>
+                    <p><strong>Defense:</strong> When under siege, you can:</p>
+                    <ul>
+                        <li><strong>Resist:</strong> Wait it out. Burns their stamina, but risks your personality drifting.</li>
+                        <li><strong>Flee:</strong> Break the connection by changing location.</li>
+                        <li><strong>Counter:</strong> Turn the tables and attempt to consume them instead.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-title"><i class="fa-solid fa-toolbox"></i> Administration</div>
+                <div class="help-text">
+                    <ul>
+                         <li><strong>Census:</strong> Track entities and your Insight levels (Badge % in corner).</li>
+                         <li><strong>Wardrobe:</strong> Define uniforms. You can create multiple variants (e.g. "Summer" vs "Winter") and NPCs will choose based on their style.</li>
+                         <li><strong>School Board:</strong> Use the Administration tab in the Grimoire to propose new Rules or Subjects. Requires Stamina to force reality changes.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-title"><i class="fa-solid fa-floppy-disk"></i> Metaphysical Anchors (System)</div>
+                <div class="help-text">
+                    <p>Reality is volatile. To prevent dissolution, you must anchor your observation.</p>
+                    <ul>
+                        <li><strong>Crystallize (Save):</strong> The "Save" protocol now extracts the current timeline into a physical artifact (<code>.json</code> file) on your device. Guard it well.</li>
+                        <li><strong>Echoes (Scenarios):</strong> The Genesis Gate can now memorize your initial parameters. Use the dropdown to recall previous world-states.</li>
+                        <li><strong>Flux (Reroll):</strong> If a timeline displeases you, the "Reroll" protocol in Settings will collapse the current universe and immediately reconstitute it with the same seeds.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="help-section">
+                <div class="help-title"><i class="fa-solid fa-clock-rotate-left"></i> Changelog</div>
+                <div class="cl-container">
+                    </div>
+            </div>
+            <div id="version-trigger" onclick="UI.requestDevAccess()"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-box" id="chat-modal" style="display: none; position: fixed; top: 80px; right: 40px; height: 600px; width: 400px; max-width: 95vw; z-index: 998; box-shadow: 0 0 30px rgba(0,0,0,0.8); resize: both; overflow: hidden; min-width: 300px; min-height: 300px;">
+    <div class="modal-header" id="chat-header" style="border-color: #00d4ff; cursor: move; background: rgba(15, 15, 20, 0.95);">
+        <span style="color: #00d4ff; pointer-events: none;"><i class="fa-solid fa-comments"></i> Spirit Commune</span>
+        <button class="icon-btn" onclick="UI.toggleChat()">&times;</button>
+    </div>
+    <div class="modal-content" style="padding: 0; background: #1a1a2e; overflow: hidden; display: flex; flex-direction: column; flex: 1;">
+        [commentsPlugin(ChatOptions)]
+    </div>
+</div>
+
+<div class="modal-box" id="telemetry-box" style="display: none; position: fixed; top: 50px; left: 50px; height: 700px; width: 600px; max-width: 95vw; z-index: 999; box-shadow: 0 0 30px rgba(0,0,0,0.8); resize: both; overflow: hidden; min-width: 300px; min-height: 300px;">
+    <div class="modal-header" id="telemetry-header" style="border-color: #e67e22; cursor: move; background: rgba(15, 15, 20, 0.95);">
+        <div style="display: flex; flex-direction: column; gap: 2px; pointer-events: none;">
+            <span style="color: #e67e22;"><i class="fa-solid fa-microchip"></i> AI Job Monitor (Queue)</span>
+            <span id="telemetry-totals" style="color: #888; font-size: 0.7rem; font-family: var(--font-body); letter-spacing: 1px;">
+                Text Jobs: 0 | Image Jobs: 0
+            </span>
+        </div>
+        <div style="display: flex; gap: 5px;">
+            <button class="icon-btn dev-only" onclick="UI.toggleDevSanctum()" title="Architect's Sanctum"><i class="fa-solid fa-code"></i></button>
+            <button class="icon-btn" onclick="UI.toggleTelemetry()">&times;</button>
+        </div>
+    </div>
+    <div id="telemetry-log-viewer" class="modal-content" style="padding: 15px; background: rgba(10, 10, 15, 0.95); overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+        <div style="color: #666; font-style: italic; text-align: center; margin-top: 20px;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Synchronizing with Core...
+        </div>
+    </div>
+</div>
+
+<div class="modal-box" id="gallery-modal" style="display: none; position: fixed; top: 80px; left: 80px; width: 900px; height: 85vh; max-width: 95vw; z-index: 997; box-shadow: 0 0 30px rgba(0,0,0,0.8); resize: both; overflow: hidden; min-width: 300px; min-height: 300px;">
+    <div class="modal-header" id="gallery-header" style="cursor: move;">
+        <span style="pointer-events: none;">Visual Archives <span id="gal-capacity" style="font-size:0.7rem; color:#666; margin-left:10px;">(0/100)</span></span>
+        <div style="display:flex; gap:10px;">
+            <button class="icon-btn" onclick="GallerySystem.clean()" title="Purge Unlocked & Unused" style="color:var(--dis-red); border-color:var(--dis-red); font-size:0.8rem;">
+                <i class="fa-solid fa-trash-can-arrow-up"></i> Purge
+            </button>
+            <button class="icon-btn" onclick="UI.toggleGallery()">&times;</button>
+        </div>
+    </div>
+    <div class="modal-content" style="background: rgba(0,0,0,0.2); padding: 15px; display:flex; flex-direction:column; flex:1; height:100%;">
+        <div id="gallery-grid" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap:10px; overflow-y:auto; flex:1; align-content: start;">
+        </div>
+    </div>
+</div>
+
+<div class="modal-box" id="grimoire-modal" style="display: none; position: fixed; top: 50px; left: 50px; width: 800px; height: 80vh; max-width: 95vw; z-index: 996; box-shadow: 0 0 30px rgba(0,0,0,0.8); resize: both; overflow: hidden; min-width: 400px; min-height: 300px;">
+    <div class="modal-header" id="grim-header-bar" style="cursor: move;">
+        <span style="pointer-events: none;">The Grimoire</span>
+        <button class="icon-btn" onclick="UI.toggleGrimoire()">&times;</button>
+    </div>
+
+    <div class="modal-content" style="background: rgba(0,0,0,0.2); display:flex; flex-direction:column; padding:0; position: relative; flex: 1; height: 100%;">
+
+        <div id="grim-main-view" style="display:flex;
+            flex-direction:column; height:100%;">
+            <div style="display:flex; border-bottom:1px solid #333; background: rgba(0,0,0,0.3);">
+                <button class="gen-tab-btn active" onclick="UI.switchGrimoireTab('self', this)">Animus</button>
+                <button class="gen-tab-btn" onclick="UI.switchGrimoireTab('entities', this)">Entities</button>
+                <button class="gen-tab-btn" onclick="UI.switchGrimoireTab('loci', this)">Loci (List)</button>
+                <button class="gen-tab-btn" onclick="UI.switchGrimoireTab('map', this)">School Map</button>
+                <button class="gen-tab-btn" onclick="UI.switchGrimoireTab('nexus', this)">Social Nexus</button>
+                <button class="gen-tab-btn" onclick="UI.switchGrimoireTab('administration', this)">Administration</button>
+                <button class="gen-tab-btn" onclick="UI.switchGrimoireTab('archives', this)">Archives</button>
+            </div>
+
+            <div id="grim-content" style="flex:1; overflow-y:auto; padding:15px;"></div>
+        </div>
+
+        <div id="grim-detail-view" style="display:none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--theme-bg); z-index: 10; flex-direction: column;">
+            <div style="padding: 10px; border-bottom: 1px solid var(--theme-accent); display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2);">
+                <button class="gen-btn-secondary" style="padding: 5px 15px;" onclick="GrimoireView.closeDetail()">
+                    <i class="fa-solid fa-arrow-left"></i> Back
+                </button>
+                <span id="grim-detail-title" style="font-family: var(--font-header); font-size: 1.1rem; color: var(--theme-accent);">Entity Name</span>
+            </div>
+            <div id="grim-detail-content" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; gap: 20px;">
+                </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="inspector-modal" class="modal-overlay" style="z-index: 99999;" onclick="if(event.target===this) UI.closeInspector()">
+    <div style="position: relative; max-width: 90vw; max-height: 90vh;">
+        <img id="inspector-img" src="" style="max-width: 100%; max-height: 80vh; border: 1px solid var(--theme-accent); box-shadow: 0 0 50px rgba(0,0,0,0.8);">
+        <div id="inspector-meta" style="background: rgba(0,0,0,0.8); padding: 10px; color: #aaa; font-size: 0.9rem; margin-top: 5px; text-align: center;"></div>
+        <button class="icon-btn" style="position: absolute;
+                top: -40px; right: 0; font-size: 1.5rem;" onclick="UI.closeInspector()">&times;</button>
+        <button id="btn-regen-inspector" class="gen-btn-secondary" style="width: 100%;
+                margin-top: 10px;" onclick="UI.regenerateInspected()">
+            <i class="fa-solid fa-rotate"></i> Dream Again (Regenerate)
+        </button>
+        <div id="inspector-btn-container"></div>
+        <div id="inspector-attire-controls" style="display:none;
+            gap:5px; margin-top:5px;">
+            <button class="gen-btn-secondary" style="flex:1;" onclick="Manager.debugChangeAttire('Gym')">Gym</button>
+            <button class="gen-btn-secondary" style="flex:1;" onclick="Manager.debugChangeAttire('Swim')">Swim</button>
+            <button class="gen-btn-secondary" style="flex:1;" onclick="Manager.debugChangeAttire('Restore')">Reset</button>
+            <button class="gen-btn-secondary" style="flex:1;
+                border-color:var(--dis-red); color:var(--dis-red);" onclick="Manager.debugChangeAttire('Minor Damage')">Dmg</button>
+        </div>
+    </div>
+</div>
+
+<div id="status-footer" style="position: fixed; bottom: 0; right: 0; background: rgba(0,0,0,0.8); border-top-left-radius: 8px; border: 1px solid #333; border-bottom: none; border-right: none; padding: 5px 15px; font-family: monospace; font-size: 0.75rem; color: #666; pointer-events: none; z-index: 2000; display: flex; gap: 15px;">
+    <span><i class="fa-solid fa-brain"></i> <span id="stat-text">IDLE</span></span>
+    <span><i class="fa-solid fa-paintbrush"></i> <span id="stat-img">IDLE</span></span>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="/game.js"></script>
+</body>
+</html>
+
