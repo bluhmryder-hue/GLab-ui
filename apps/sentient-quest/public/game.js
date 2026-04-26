@@ -22170,6 +22170,9 @@
     var Settings = {
         state: {
             genesisTier: "Baseline",
+            kokoroServer: "http://localhost:8888", // Kokoro TTS Server URL
+            autoplayEnabled: false, // Autoplay state
+            voiceId: "af_heart", // Default Kokoro voice
             allowSpirits: true,
             corporealityTierCount: 13,
             fontFamily: "'Garamond', serif",
@@ -44523,6 +44526,61 @@
     /* =========================================
        LOGIC: MANAGER (The Loop)
        ========================================= */
+
+    // --- VOICE ENGINE: Integration with Kokoro TTS Server ---
+    var VoiceEngine = {
+        async speak(text) {
+            if (!Settings.state.kokoroServer) return;
+            console.log("[VoiceEngine] Requesting synthesis for:", text.substring(0, 30) + "...");
+            try {
+                const response = await fetch(`${Settings.state.kokoroServer}/v1/audio/speech`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        input: text,
+                        voice: Settings.state.voiceId,
+                        model: "kokoro"
+                    })
+                });
+                if (!response.ok) throw new Error("TTS Request Failed");
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audio.play();
+            } catch (e) {
+                console.error("[VoiceEngine] TTS Error:", e);
+            }
+        }
+    };
+
+    // --- AUTOPLAY MODULE: Automated reality progression ---
+    var AutoPlay = {
+        timer: null,
+        start() {
+            console.log("[AutoPlay] Sequence initiated.");
+            Settings.state.autoplayEnabled = true;
+            this.loop();
+        },
+        stop() {
+            console.log("[AutoPlay] Sequence halted.");
+            Settings.state.autoplayEnabled = false;
+            if (this.timer) clearTimeout(this.timer);
+        },
+        loop() {
+            if (!Settings.state.autoplayEnabled) return;
+            // logic to trigger next game step
+            const nextInterval = 5000 + Math.random() * 5000;
+            this.timer = setTimeout(() => {
+                if (Manager && Manager.progressReality) {
+                    Manager.progressReality();
+                } else {
+                    console.log("[AutoPlay] Manager.progressReality not found, simulating tick.");
+                }
+                this.loop();
+            }, nextInterval);
+        }
+    };
+
     var Manager = {
         removeSocial(type, id) {
             if (type === 'club') {
